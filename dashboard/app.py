@@ -80,11 +80,14 @@ def chart(frame,x,y,color=None,share=None):
                color_discrete_map={**base_colors,'Redução':'#004c3c','Aumento':'#6a3128','Sem variação':'#98afc1'})
     if color is None and x in ('b6','b8'):
         fig.update_traces(marker_color=base_colors[x.upper()])
+    if is_variation:
+        fig.update_traces(width=0.21,opacity=1,marker_opacity=1)
     names=frame[y].drop_duplicates().tolist()
+    label_width=48 if is_variation else 32
     fig.update_yaxes(categoryorder='array',categoryarray=names,autorange='reversed',tickmode='array',tickvals=names,
-                     ticktext=['<br>'.join(textwrap.wrap(str(name),32)) for name in names])
+                     ticktext=['<br>'.join(textwrap.wrap(str(name),label_width)) for name in names])
     if share: fig.update_traces(texttemplate='%{text:.1f}%',textposition='auto')
-    row_height=120 if is_variation else 95
+    row_height=180 if is_variation else 95
     height=120+len(names)*row_height
     if not is_variation:
         height=min(1100,height)
