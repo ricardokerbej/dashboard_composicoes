@@ -106,8 +106,6 @@ with st.sidebar:
 
 st.markdown('<div class="eyebrow">METRÔ LINHA 2 · REPLANEJAMENTO B8</div>',unsafe_allow_html=True)
 st.title(page)
-st.warning('BASE PRELIMINAR — preços, quantidades, composições e estratégias B8 sujeitos a revisão.')
-st.info('QUANTIDADES AINDA NÃO DISTRIBUÍDAS ENTRE AS CPUs — impactos financeiros totais não consolidados.')
 
 if page=='Qualidade dos dados':
     st.caption('Auditoria da base completa. Campos opcionais não são contabilizados como problemas.')
