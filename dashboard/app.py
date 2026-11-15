@@ -74,7 +74,7 @@ def chart(frame,x,y,color=None,share=None):
     base_colors={'B6':'#00576c','B8':'#2cb087','Revisão':'#d5a441'}
     is_variation=color=='Efeito'
     fig=px.bar(frame,x=x,y=y,color=color,orientation='h',barmode='overlay' if is_variation else 'group',labels=LABELS,
-               text=share,hover_data={share:':.2f'} if share else None,
+               text=share,hover_data={x:':,.2f', **({share:':,.2f'} if share else {})},
                category_orders={'Base':list(base_colors)},
                color_discrete_sequence=['#217b85','#98afc1','#d5a441'],
                color_discrete_map={**base_colors,'Redução':'#004c3c','Aumento':'#6a3128','Sem variação':'#98afc1'})
@@ -87,9 +87,10 @@ def chart(frame,x,y,color=None,share=None):
     fig.update_yaxes(categoryorder='array',categoryarray=names,autorange='reversed',tickmode='array',tickvals=names,
                      ticktext=['<br>'.join(textwrap.wrap(str(name),label_width)) for name in names])
     if share: fig.update_traces(texttemplate='%{text:.1f}%',textposition='auto')
-    height=70+len(names)*80 if is_variation else max(300,min(1100,120+len(names)*95))
-    fig.update_layout(template='plotly_white',height=height,
-                      margin=dict(l=0,r=15,t=15,b=55),legend=dict(orientation='h',y=-.08 if is_variation else -.2),legend_title_text='',
+    height=105+len(names)*80 if is_variation else max(300,min(1100,120+len(names)*95))
+    legend=dict(orientation='h',yref='container',y=0,yanchor='bottom') if is_variation else dict(orientation='h',y=-.2)
+    fig.update_layout(template='plotly_white',height=height,separators=',.',
+                      margin=dict(l=0,r=15,t=15,b=90 if is_variation else 55),legend=legend,legend_title_text='',
                       font=dict(color='#183247'))
     st.plotly_chart(fig,width='stretch')
 
