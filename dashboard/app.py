@@ -73,6 +73,7 @@ def chart(frame,x,y,color=None,share=None):
     if frame.empty: return
     base_colors={'B6':'#00576c','B8':'#2cb087','Revisão':'#d5a441'}
     is_variation=color=='Efeito'
+    compact_bars=is_variation or (x=='b8' and y=='insumo' and color is None)
     fig=px.bar(frame,x=x,y=y,color=color,orientation='h',barmode='overlay' if is_variation else 'group',labels=LABELS,
                text=share,hover_data={x:':,.2f', **({share:':,.2f'} if share else {})},
                category_orders={'Base':list(base_colors)},
@@ -81,16 +82,19 @@ def chart(frame,x,y,color=None,share=None):
     if color is None and x in ('b6','b8'):
         fig.update_traces(marker_color=base_colors[x.upper()])
     if is_variation:
-        fig.update_traces(width=0.5,opacity=1,marker_opacity=1)
+        fig.update_traces(opacity=1,marker_opacity=1)
+    if compact_bars:
+        fig.update_traces(width=0.5)
     names=frame[y].drop_duplicates().tolist()
-    label_width=48 if is_variation else 32
+    label_width=48 if compact_bars else 32
     fig.update_yaxes(categoryorder='array',categoryarray=names,autorange='reversed',tickmode='array',tickvals=names,
                      ticktext=['<br>'.join(textwrap.wrap(str(name),label_width)) for name in names])
     if share: fig.update_traces(texttemplate='%{text:.1f}%',textposition='auto')
-    height=105+len(names)*80 if is_variation else max(300,min(1100,120+len(names)*95))
+    bottom_margin=90 if is_variation else 55
+    height=15+bottom_margin+len(names)*80 if compact_bars else max(300,min(1100,120+len(names)*95))
     legend=dict(orientation='h',yref='container',y=0,yanchor='bottom') if is_variation else dict(orientation='h',y=-.2)
     fig.update_layout(template='plotly_white',height=height,separators=',.',
-                      margin=dict(l=0,r=15,t=15,b=90 if is_variation else 55),legend=legend,legend_title_text='',
+                      margin=dict(l=0,r=15,t=15,b=bottom_margin),legend=legend,legend_title_text='',
                       font=dict(color='#183247'))
     st.plotly_chart(fig,width='stretch')
 
