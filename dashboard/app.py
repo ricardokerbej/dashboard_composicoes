@@ -71,7 +71,7 @@ def grid(frame, download=None):
 
 def chart(frame,x,y,color=None,share=None):
     if frame.empty: return
-    base_colors={'B6':'#40C08C','B8':'#0FB0F1','Revisão':'#d5a441'}
+    base_colors={'B6':'#00576c','B8':'#2cb087','Revisão':'#d5a441'}
     fig=px.bar(frame,x=x,y=y,color=color,orientation='h',barmode='group',labels=LABELS,
                text=share,hover_data={share:':.2f'} if share else None,
                category_orders={'Base':list(base_colors)},
