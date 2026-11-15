@@ -43,8 +43,8 @@ LABELS={'numero_preco':'Nº DO PREÇO','item':'Item','descricao':'Descrição co
         'local':'Local / anotação da fonte','unidade':'Unidade','receita_unitaria':'Receita R$/un',
         'quantidade_contratada':'Quantidade contratada','quantidade_executada':'Quantidade executada',
         'executado_pct':'Executado %',
-        'saldo':'Saldo do item','cpus_relacionadas':'CPUs relacionadas','b6':'B6 R$/un','b8':'B8 preliminar R$/un',
-        'delta':'Delta R$/un','delta_pct':'Delta %','fcd_b6':'F/CD B6','fcd_b8':'F/CD B8 preliminar',
+        'saldo':'Saldo do item','cpus_relacionadas':'CPUs relacionadas','b6':'B6 R$/un','b8':'B8 R$/un',
+        'delta':'Delta R$/un','delta_pct':'Delta %','fcd_b6':'F/CD B6','fcd_b8':'F/CD B8',
         'classe':'Classificação','codigo':'Código insumo','insumo':'Insumo','linha_excel':'Linha Excel',
         'aba':'Aba de origem','inc_b6':'Incidência B6','inc_b8':'Incidência ajustada','inc_revisao':'Incidência revisão',
         'diferenca_inc':'Diferença ajustada − B6','diferenca_inc_pct':'Diferença ajustada %',
@@ -71,12 +71,16 @@ def grid(frame, download=None):
 
 def chart(frame,x,y,color=None,share=None):
     if frame.empty: return
+    base_colors={'B6':'#40C08C','B8':'#0FB0F1','Revisão':'#d5a441'}
     fig=px.bar(frame,x=x,y=y,color=color,orientation='h',barmode='group',labels=LABELS,
                text=share,hover_data={share:':.2f'} if share else None,
+               category_orders={'Base':list(base_colors)},
                color_discrete_sequence=['#217b85','#98afc1','#d5a441'],
-               color_discrete_map={'Redução':'#217b85','Aumento':'#bc613d','Sem variação':'#98afc1'})
+               color_discrete_map={**base_colors,'Redução':'#217b85','Aumento':'#bc613d','Sem variação':'#98afc1'})
+    if color is None and x in ('b6','b8'):
+        fig.update_traces(marker_color=base_colors[x.upper()])
     names=frame[y].drop_duplicates().tolist()
-    fig.update_yaxes(categoryorder='array',categoryarray=names[::-1],tickmode='array',tickvals=names,
+    fig.update_yaxes(categoryorder='array',categoryarray=names,autorange='reversed',tickmode='array',tickvals=names,
                      ticktext=['<br>'.join(textwrap.wrap(str(name),32)) for name in names])
     if share: fig.update_traces(texttemplate='%{text:.1f}%',textposition='auto')
     fig.update_layout(template='plotly_white',height=max(300,min(1100,120+frame[y].nunique()*95)),
@@ -154,7 +158,7 @@ if page=='Visão Executiva':
     st.subheader(cpu.cpu)
     st.caption('Local / anotações: '+cpu.local)
     st.caption(f'Nº DO PREÇO: {cpu.numero_preco} · Item: {cpu["item"]} · '+(str(cpu.descricao) if pd.notna(cpu.descricao) else 'Sem correspondência única na receita'))
-    for col,(label,field) in zip(st.columns(4),[('B6 R$/un','b6'),('B8 preliminar R$/un','b8'),('Delta R$/un','delta'),('Delta %','delta_pct')]):
+    for col,(label,field) in zip(st.columns(4),[('B6 R$/un','b6'),('B8 R$/un','b8'),('Delta R$/un','delta'),('Delta %','delta_pct')]):
         col.metric(label,fmt(cpu[field]))
     for col,(label,field) in zip(st.columns(3),[('Receita unitária','receita_unitaria'),('F/CD B6','fcd_b6'),('F/CD B8','fcd_b8')]):
         col.metric(label,fmt(cpu[field],prefix='R$ ' if field=='receita_unitaria' else ''))
@@ -166,7 +170,7 @@ if page=='Visão Executiva':
 
     st.subheader('Composição do custo por grupo')
     comparison=pd.concat([groups[['classe',base,'participacao_'+base]].rename(columns={base:'R$/un','participacao_'+base:'Participação %'}).assign(Base=label)
-                          for base,label in [('b6','B6'),('b8','B8 preliminar')]],ignore_index=True)
+                          for base,label in [('b6','B6'),('b8','B8')]],ignore_index=True)
     chart(comparison,'R$/un','classe','Base',share='Participação %')
     st.caption('Grupos ordenados pelo custo B8. Percentuais representam a participação no total da respectiva base.')
     grid(groups[['classe','b6','b8','participacao_b6','participacao_b8']],'estrutura_custo')
@@ -205,7 +209,7 @@ else:
         st.info('Esta CPU não tem insumos classificados como mão de obra.')
     else:
         bars=labor.melt(id_vars='insumo',value_vars=['inc_b6','inc_b8','inc_revisao'],var_name='Base',value_name='Incidência').dropna(subset=['Incidência'])
-        bars['Base']=bars.Base.map({'inc_b6':'B6','inc_b8':'Ajustada','inc_revisao':'Revisão'})
+        bars['Base']=bars.Base.map({'inc_b6':'B6','inc_b8':'B8','inc_revisao':'Revisão'})
         chart(bars,'Incidência','insumo','Base')
         grid(labor[['insumo','local','inc_b6','inc_b8','inc_revisao','diferenca_inc','diferenca_inc_pct','diferenca_revisao','diferenca_revisao_pct','linha_excel']],'produtividade')
         if labor.inc_revisao.isna().all(): st.caption('Incidência revisão ainda não preenchida: campo opcional nesta etapa.')
